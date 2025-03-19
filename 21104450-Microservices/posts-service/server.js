@@ -1,7 +1,9 @@
-const { ApolloServer, gql } = require("apollo-server");
+const { ApolloServer, gql, PubSub } = require("apollo-server");
 const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
+const pubsub = new PubSub();
+const POST_ADDED = "POST_ADDED";
 
 const typeDefs = gql`
   type Post {
@@ -13,26 +15,32 @@ const typeDefs = gql`
 
   type Query {
     posts: [Post]
-    post(id: ID!): Post
   }
 
   type Mutation {
     createPost(title: String!, content: String!, userId: Int!): Post
-    updatePost(id: ID!, title: String, content: String): Post
-    deletePost(id: ID!): Post
+  }
+
+  type Subscription {
+    postAdded: Post
   }
 `;
 
 const resolvers = {
   Query: {
     posts: async () => await prisma.post.findMany(),
-    post: async (_, args) => await prisma.post.findUnique({ where: { id: Number(args.id) } }),
   },
   Mutation: {
-    createPost: async (_, args) => await prisma.post.create({ data: args }),
-    updatePost: async (_, args) =>
-      await prisma.post.update({ where: { id: Number(args.id) }, data: { title: args.title, content: args.content } }),
-    deletePost: async (_, args) => await prisma.post.delete({ where: { id: Number(args.id) } }),
+    createPost: async (_, args) => {
+      const newPost = await prisma.post.create({ data: args });
+      pubsub.publish(POST_ADDED, { postAdded: newPost });
+      return newPost;
+    },
+  },
+  Subscription: {
+    postAdded: {
+      subscribe: () => pubsub.asyncIterator([POST_ADDED]),
+    },
   },
 };
 
