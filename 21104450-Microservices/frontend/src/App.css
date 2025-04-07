@@ -1,0 +1,35 @@
+/* src/App.css */
+.App {
+  font-family: "Arial", sans-serif;
+  text-align: center;
+  padding: 50px;
+}
+
+table {
+  width: 80%;
+  margin: auto;
+  border-collapse: collapse;
+  border: 2px solid #d4af37; /* Golden color */
+  background-color: #f7f7f7;
+}
+
+th, td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background-color: #eaeaea;
+  font-size: 20px;
+}
+
+tr:hover {
+  background-color: #f1f1f1;
+}
+
+h1 {
+  font-size: 3rem;
+  color: #d4af37;
+  margin-bottom: 20px;
+}

@@ -3,20 +3,29 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
+    "@apollo/client": "^3.13.5",
+    "@graphql-tools/schema": "^10.0.23",
     "@prisma/client": "^6.5.0",
     "apollo-server": "^3.13.0",
+    "apollo-server-express": "^3.13.0",
+    "axios": "^1.8.4",
     "dotenv": "^16.4.7",
-    "graphql": "^16.10.0",
-    "sqlite3": "^5.1.7"
+    "express": "^4.21.2",
+    "graphql": "^15.10.1",
+    "graphql-subscriptions": "^3.0.0",
+    "sqlite3": "^5.1.7",
+    "subscriptions-transport-ws": "^0.11.0",
+    "ws": "^8.18.1"
   },
   "devDependencies": {
     "prisma": "^6.5.0"
-  }
+  },
+  "description": ""
 }
