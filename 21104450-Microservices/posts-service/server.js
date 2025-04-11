@@ -43,9 +43,31 @@ const resolvers = {
   },
   Mutation: {
     createPost: async (_, args) => {
-      const newPost = await prisma.post.create({ data: args });
-      pubsub.publish("POST_ADDED", { postAdded: newPost });
-      return newPost;
+      const { request, gql } = await import("graphql-request");
+      
+      const USER_SERVICE_URL = "http://localhost:4001"; // users-service URL
+      const query = gql`
+        query GetUser($id: ID!) {
+          user(id: $id) {
+            id
+          }
+        }
+      `;
+  
+      try {
+        const result = await request(USER_SERVICE_URL, query, { id: String(args.userId) });
+  
+        if (!result.user) {
+          throw new Error("User not found");
+        }
+  
+        const newPost = await prisma.post.create({ data: args });
+        pubsub.publish("POST_ADDED", { postAdded: newPost });
+        return newPost;
+      } catch (error) {
+        console.error("User validation failed:", error.message);
+        throw new Error("Cannot create post: User does not exist.");
+      }
     },
 
     deletePost: async (_, { id }) => {

@@ -39,22 +39,25 @@ const App = () => {
   const { data: subData } = useSubscription(POST_ADDED);
   const [deletePost] = useMutation(DELETE_POST);
 
+  // Handling initial post loading via useQuery
   useEffect(() => {
     if (initialData) {
-      setPosts(initialData.posts);
+      setPosts(initialData.posts); // Set initial posts when data is available
     }
   }, [initialData]);
 
+  // Handling new post subscription updates via useSubscription
   useEffect(() => {
-    if (subData) {
-      setPosts((prev) => [subData.postAdded, ...prev]);
+    if (subData && subData.postAdded) {
+      setPosts((prev) => [subData.postAdded, ...prev]); // Prepend the new post to the list
     }
   }, [subData]);
 
+  // Handling delete post action
   const handleDelete = async (id) => {
     try {
       await deletePost({ variables: { id } });
-      setPosts((prev) => prev.filter(post => post.id !== id));
+      setPosts((prev) => prev.filter(post => post.id !== id)); // Remove deleted post from state
     } catch (error) {
       console.error("Error deleting post:", error);
     }
@@ -62,14 +65,14 @@ const App = () => {
 
   return (
     <div className="App">
-      <h1>Greek Style Posts</h1>
+      <h1>Posts</h1>
       <table>
         <thead>
           <tr>
             <th>Title</th>
             <th>Content</th>
             <th>User ID</th>
-            <th>Action</th> {/* New column for delete button */}
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
