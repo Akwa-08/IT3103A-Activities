@@ -1,35 +1,101 @@
-/* src/App.css */
-.App {
-  font-family: "Arial", sans-serif;
-  text-align: center;
-  padding: 50px;
+/* App.css */
+
+/* General Body Styles */
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f7f7f7;
+  color: #333;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  /* background: url('https://via.placeholder.com/1500x1000.png?text=Greek+Marble+Texture') center/cover no-repeat; */
 }
 
+/* App Container */
+.App {
+  text-align: center;
+  width: 90%;
+  max-width: 1200px;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  margin: 20px;
+}
+
+/* Header with Greek Style */
+h1 {
+  font-size: 3em;
+  color: #d4af37; /* Golden color */
+  font-family: 'Georgia', serif;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+}
+
+/* Table Styling (Greek Columns and Rows) */
 table {
-  width: 80%;
-  margin: auto;
+  width: 100%;
+  margin-top: 20px;
   border-collapse: collapse;
-  border: 2px solid #d4af37; /* Golden color */
-  background-color: #f7f7f7;
 }
 
 th, td {
-  padding: 10px;
+  padding: 15px;
   text-align: left;
-  border-bottom: 1px solid #ddd;
+  border: 1px solid #ddd;
+  font-size: 1.2em;
+  color: #333;
 }
 
 th {
-  background-color: #eaeaea;
-  font-size: 20px;
+  background-color: #d4af37; /* Golden Header */
+  color: white;
 }
 
-tr:hover {
-  background-color: #f1f1f1;
+td {
+  background-color: #f4f4f4;
+  transition: background-color 0.3s ease-in-out;
 }
 
-h1 {
-  font-size: 3rem;
-  color: #d4af37;
-  margin-bottom: 20px;
+td:hover {
+  background-color: #e9e9e9; /* Hover effect */
+}
+
+/* Footer */
+footer {
+  margin-top: 30px;
+  font-size: 1.2em;
+  color: #888;
+  font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2.5em;
+  }
+
+  table {
+    font-size: 1em;
+  }
+}
+
+
+.delete-btn {
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 1em;
+  transition: background-color 0.3s ease;
+}
+
+.delete-btn:hover {
+  background-color: #ff1a1a;
 }

@@ -1,13 +1,10 @@
 // src/App.js
 import React, { useEffect, useState } from "react";
-import { ApolloProvider, useQuery, useSubscription } from "@apollo/client";
-import client from "./ApolloClient"; // Apollo Client
-import { gql } from "graphql-tag";
-import './App.css'; // Add this line to import the CSS
+import { gql, useQuery, useMutation, useSubscription } from "@apollo/client";
+import './App.css';
 
-// GraphQL Query to fetch all posts
 const GET_POSTS = gql`
-  query GetPosts {
+  query {
     posts {
       id
       title
@@ -17,9 +14,8 @@ const GET_POSTS = gql`
   }
 `;
 
-// GraphQL Subscription for real-time post updates
 const POST_ADDED = gql`
-  subscription PostAdded {
+  subscription {
     postAdded {
       id
       title
@@ -29,42 +25,51 @@ const POST_ADDED = gql`
   }
 `;
 
+const DELETE_POST = gql`
+  mutation deletePost($id: ID!) {
+    deletePost(id: $id) {
+      id
+    }
+  }
+`;
+
 const App = () => {
   const [posts, setPosts] = useState([]);
+  const { data: initialData } = useQuery(GET_POSTS);
+  const { data: subData } = useSubscription(POST_ADDED);
+  const [deletePost] = useMutation(DELETE_POST);
 
-  // Query to fetch posts
-  const { data: queryData, loading: queryLoading } = useQuery(GET_POSTS);
-
-  // Subscription to listen for new posts
-  const { data: subscriptionData } = useSubscription(POST_ADDED);
-
-  // Update the state with the initial posts from the query
   useEffect(() => {
-    if (queryData) {
-      setPosts(queryData.posts);
+    if (initialData) {
+      setPosts(initialData.posts);
     }
-  }, [queryData]);
+  }, [initialData]);
 
-  // Add new post from subscription data to the state
   useEffect(() => {
-    if (subscriptionData) {
-      setPosts((prevPosts) => [subscriptionData.postAdded, ...prevPosts]);
+    if (subData) {
+      setPosts((prev) => [subData.postAdded, ...prev]);
     }
-  }, [subscriptionData]);
+  }, [subData]);
 
-  if (queryLoading) {
-    return <div>Loading...</div>;
-  }
+  const handleDelete = async (id) => {
+    try {
+      await deletePost({ variables: { id } });
+      setPosts((prev) => prev.filter(post => post.id !== id));
+    } catch (error) {
+      console.error("Error deleting post:", error);
+    }
+  };
 
   return (
     <div className="App">
-      <h1>Posts</h1>
+      <h1>Greek Style Posts</h1>
       <table>
         <thead>
           <tr>
             <th>Title</th>
             <th>Content</th>
             <th>User ID</th>
+            <th>Action</th> {/* New column for delete button */}
           </tr>
         </thead>
         <tbody>
@@ -73,18 +78,18 @@ const App = () => {
               <td>{post.title}</td>
               <td>{post.content}</td>
               <td>{post.userId}</td>
+              <td>
+                <button onClick={() => handleDelete(post.id)} className="delete-btn">
+                  Delete
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
+      <footer>E Pasar Nako Sir pls</footer>
     </div>
   );
 };
 
-const Root = () => (
-  <ApolloProvider client={client}>
-    <App />
-  </ApolloProvider>
-);
-
-export default Root;
+export default App;

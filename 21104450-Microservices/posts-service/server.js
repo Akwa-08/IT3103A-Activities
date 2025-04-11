@@ -1,17 +1,20 @@
+// posts-service/server.js
+
 const express = require("express");
-const { ApolloServer } = require("apollo-server-express");
-const { PrismaClient } = require("@prisma/client");
-const { PubSub } = require("graphql-subscriptions");
 const http = require("http");
-const { SubscriptionServer } = require("subscriptions-transport-ws");  // Correct import for WebSocket server
+const cors = require("cors");
+const { expressMiddleware } = require("@apollo/server/express4");
+const { ApolloServer } = require("@apollo/server");
 const { makeExecutableSchema } = require("@graphql-tools/schema");
-const { execute, subscribe } = require("graphql");  // Import execute and subscribe from graphql package
+const { WebSocketServer } = require("ws");
+const { useServer } = require("graphql-ws/lib/use/ws");
+const bodyParser = require("body-parser");
+const { PrismaClient } = require("@prisma/client");
+const pubsub = require("./pubsub");
 
 const prisma = new PrismaClient();
-const pubsub = new PubSub();
-const app = express();
+const PORT = 4002;
 
-// Define GraphQL Schema
 const typeDefs = `
   type Post {
     id: ID!
@@ -26,6 +29,7 @@ const typeDefs = `
 
   type Mutation {
     createPost(title: String!, content: String!, userId: Int!): Post
+    deletePost(id: ID!): Post
   }
 
   type Subscription {
@@ -33,7 +37,6 @@ const typeDefs = `
   }
 `;
 
-// Resolvers
 const resolvers = {
   Query: {
     posts: async () => await prisma.post.findMany(),
@@ -44,61 +47,56 @@ const resolvers = {
       pubsub.publish("POST_ADDED", { postAdded: newPost });
       return newPost;
     },
+
+    deletePost: async (_, { id }) => {
+      const deletedPost = await prisma.post.delete({
+        where: { id: parseInt(id) }, // Ensure the id is parsed as an integer
+      });
+      return deletedPost;
+    },
   },
   Subscription: {
     postAdded: {
-      subscribe: () => pubsub.asyncIterator("POST_ADDED"),
+      subscribe: () => pubsub.asyncIterableIterator("POST_ADDED"),
     },
   },
 };
 
-// Create GraphQL Schema
-const schema = makeExecutableSchema({ typeDefs, resolvers });
+async function startApolloServer() {
+  const app = express();
+  app.use(cors());
+  app.use(bodyParser.json());
 
-// Create HTTP Server
-const httpServer = http.createServer(app);
+  const httpServer = http.createServer(app);
+  const schema = makeExecutableSchema({ typeDefs, resolvers });
 
-// WebSocket Server for Subscriptions (using subscriptions-transport-ws)
-const subscriptionServer = SubscriptionServer.create(
-  {
-    schema,
-    execute,
-    subscribe,
-  },
-  {
+  const wsServer = new WebSocketServer({
     server: httpServer,
-    path: "/graphql",  // WebSocket path for subscriptions
-  }
-);
+    path: "/graphql",
+  });
 
-// Create Apollo Server (Express-based)
-const server = new ApolloServer({
-  schema,
-  plugins: [
-    {
+  const serverCleanup = useServer({ schema }, wsServer);
+
+  const apolloServer = new ApolloServer({
+    schema,
+    plugins: [{
       async serverWillStart() {
         return {
           async drainServer() {
-            subscriptionServer.close();  // Gracefully close WebSocket server when Apollo server shuts down
-          },
+            await serverCleanup.dispose();
+          }
         };
-      },
-    },
-  ],
-});
+      }
+    }]
+  });
 
-// Start the Apollo Server
-async function startServer() {
-  // Start Apollo Server
-  await server.start();
-  server.applyMiddleware({ app });  // Apply middleware for Express
-  
-  // Start the HTTP Server
-  httpServer.listen(4002, () => {
-    console.log("✅ Post service running at http://localhost:4002/graphql");
-    console.log("✅ WebSockets ready at ws://localhost:4002/graphql");
+  await apolloServer.start();
+  app.use("/graphql", expressMiddleware(apolloServer));
+
+  httpServer.listen(PORT, () => {
+    console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);
+    console.log(`📡 Subscriptions ready at ws://localhost:${PORT}/graphql`);
   });
 }
 
-// Start the service
-startServer();
+startApolloServer();
